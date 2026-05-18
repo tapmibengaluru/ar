@@ -9,26 +9,28 @@ export default function ArExperiencePage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const initARComponent = () => {
+    const registerComponents = () => {
       // @ts-ignore
       if (window.AFRAME && !window.AFRAME.components["tap-to-place"]) {
         // @ts-ignore
         window.AFRAME.registerComponent("tap-to-place", {
           init: function () {
-            const scene = this.el.sceneEl;
-            const videoAsset = document.querySelector("#ar-video-source") as HTMLVideoElement;
-            const videoContainer = document.querySelector("#video-screen-container");
-            const reticle = document.querySelector("#floor-reticle");
+            const scene = this.el.sceneEl || this.el;
             let isPlaced = false;
 
             scene.addEventListener("click", (event: any) => {
-              // Ensure the click event hit our invisible ground collision array
-              if (!isPlaced && event.detail.intersection) {
+              // Ensure the click event hit our collision plane
+              if (!isPlaced && event.detail && event.detail.intersection) {
                 const clickPosition = event.detail.intersection.point;
+                const videoAsset = document.querySelector("#ar-video-source") as HTMLVideoElement | null;
+                const videoContainer = document.querySelector("#video-screen-container");
+                const reticle = document.querySelector("#floor-reticle");
 
                 // Lock video container precisely where the user tapped
-                videoContainer?.setAttribute("position", clickPosition);
-                videoContainer?.setAttribute("visible", "true");
+                if (videoContainer) {
+                  videoContainer.setAttribute("position", clickPosition);
+                  videoContainer.setAttribute("visible", "true");
+                }
 
                 // Trigger video playback and lift browser audio lock rules
                 if (videoAsset) {
@@ -37,7 +39,10 @@ export default function ArExperiencePage() {
                 }
 
                 // Clean up placement guide UI
-                if (reticle) reticle.setAttribute("visible", "false");
+                if (reticle) {
+                  reticle.setAttribute("visible", "false");
+                }
+
                 isPlaced = true;
               }
             });
@@ -46,10 +51,16 @@ export default function ArExperiencePage() {
       }
     };
 
-    if (engineLoaded) {
-      initARComponent();
-    }
-  }, [engineLoaded]);
+    const interval = setInterval(() => {
+      // @ts-ignore
+      if (window.AFRAME) {
+        registerComponents();
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="w-screen h-screen bg-black overflow-hidden relative">
@@ -58,19 +69,19 @@ export default function ArExperiencePage() {
         src="https://aframe.io/releases/1.5.0/aframe.min.js" 
         strategy="beforeInteractive" 
       />
+      {/* Community look-at component for orienting video screen to camera */}
+      <Script 
+        src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js" 
+        strategy="beforeInteractive" 
+      />
 
       {/* 2. 8th Wall Tracking Engine Binary - LOADS SECOND */}
       <Script
         src="/external-xr/xr.js"
-        strategy="lazyOnload"
+        strategy="afterInteractive"
         data-preload-chunks="slam"
         onLoad={() => {
-          // Fixed the event tracking hook to listen for the proper engine init event
-          window.addEventListener("xr-loaded", () => setEngineLoaded(true), { once: true });
-          
-          // Fallback assertion check in case binary registration finished early
-          // @ts-ignore
-          if (window.XR8) setEngineLoaded(true);
+          setEngineLoaded(true);
         }}
       />
 
@@ -102,12 +113,15 @@ export default function ArExperiencePage() {
             cursor="fuse: false; rayOrigin: mouse;"
           />
 
+          {/* Invisible ground raycast receiver representing physical space.
+              NOTE: visible="false" causes Three.js raycasting to ignore the mesh! 
+              Using opacity: 0 makes it invisible but raycastable. */}
           {/* @ts-ignore */}
           <a-entity
             class="surface-floor"
             geometry="primitive: plane; width: 1000; height: 1000"
             rotation="-90 0 0"
-            visible="false"
+            material="opacity: 0; transparent: true; depthWrite: false;"
           />
 
           {/* @ts-ignore */}
@@ -126,7 +140,6 @@ export default function ArExperiencePage() {
         /* Custom UI Loading Wrapper built with Tailwind */
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-neutral-900 to-black text-white z-50 p-6">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
-          {/* <h2 className="text-xl font-bold tracking-tight mb-1">MEGAMIND X TAPMI</h2> */}
           <p className="text-xs font-light text-neutral-400 tracking-wide animate-pulse">
             Configuring AR Engine...
           </p>
