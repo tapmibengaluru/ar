@@ -68,3 +68,54 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
+
+/* 8th Wall XRExtras Overlay Premium Dark Customization */
+#loadBackground,
+#prompt-box,
+#prompt-container,
+#error-box,
+#error-container,
+.prompt-box,
+#desktop-prompt,
+#xr-app-bar,
+#xr-app-header,
+.xr-app-bar {
+  background: #050505 !important;
+  background-color: #050505 !important;
+  color: #ffffff !important;
+}
+
+/* Ensure modal text and prompts inside 8th Wall overlays are fully visible against dark background */
+#loadBackground *,
+#prompt-box *,
+#prompt-container *,
+#error-box *,
+#error-container *,
+.prompt-box *,
+#desktop-prompt * {
+  color: #ffffff !important;
+}
+
+/* Style permission and action buttons */
+.prompt-button,
+#permission-button,
+#error-button,
+.xr-button {
+  background-color: #4F46E5 !important;
+  color: #ffffff !important;
+  padding: 12px 28px !important;
+  border-radius: 9999px !important;
+  font-weight: bold !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4) !important;
+}
+
+.prompt-button:hover,
+#permission-button:hover,
+#error-button:hover,
+.xr-button:hover {
+  background-color: #4338ca !important;
+  transform: scale(1.05) !important;
+}
