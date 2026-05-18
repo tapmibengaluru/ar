@@ -7,10 +7,8 @@ export default function ArExperiencePage() {
   const [engineLoaded, setEngineLoaded] = useState(false);
 
   useEffect(() => {
-    // 1. Ensure this only initializes in the browser context
     if (typeof window === "undefined") return;
 
-    // 2. Custom A-Frame component logic to place video and handle mobile audio autoplay block
     const initARComponent = () => {
       // @ts-ignore
       if (window.AFRAME && !window.AFRAME.components["tap-to-place"]) {
@@ -24,22 +22,22 @@ export default function ArExperiencePage() {
             let isPlaced = false;
 
             scene.addEventListener("click", (event: any) => {
+              // Ensure the click event hit our invisible ground collision array
               if (!isPlaced && event.detail.intersection) {
-                // Fetch the exact 3D vector where the user clicked on the physical floor
                 const clickPosition = event.detail.intersection.point;
 
-                // Move the video mesh right to that physical spot and display it
+                // Lock video container precisely where the user tapped
                 videoContainer?.setAttribute("position", clickPosition);
                 videoContainer?.setAttribute("visible", "true");
 
-                // Bypass mobile browser canvas audio privacy blocking rules
+                // Trigger video playback and lift browser audio lock rules
                 if (videoAsset) {
-                  videoAsset.play().catch((err) => console.log("Playback error:", err));
+                  videoAsset.play().catch((err) => console.error("Video playback failed:", err));
                   videoAsset.muted = false;
                 }
 
-                // Hide the floor target locator
-                reticle?.setAttribute("visible", "false");
+                // Clean up placement guide UI
+                if (reticle) reticle.setAttribute("visible", "false");
                 isPlaced = true;
               }
             });
@@ -55,30 +53,34 @@ export default function ArExperiencePage() {
 
   return (
     <div className="w-screen h-screen bg-black overflow-hidden relative">
-      {/* 3. Load the 8th Wall Engine Binary Script directly into the client DOM */}
+      {/* 1. Core 3D Base Pipeline - MUST LOAD FIRST */}
+      <Script 
+        src="https://aframe.io/releases/1.5.0/aframe.min.js" 
+        strategy="beforeInteractive" 
+      />
+
+      {/* 2. 8th Wall Tracking Engine Binary - LOADS SECOND */}
       <Script
         src="/external-xr/xr.js"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         data-preload-chunks="slam"
         onLoad={() => {
-          // Listen for A-Frame to load entirely after the core binary mounts
-          window.addEventListener("飛-loaded", () => setEngineLoaded(true), { once: true });
-          // Fallback if script loads fast
+          // Fixed the event tracking hook to listen for the proper engine init event
+          window.addEventListener("xr-loaded", () => setEngineLoaded(true), { once: true });
+          
+          // Fallback assertion check in case binary registration finished early
           // @ts-ignore
-          if (window.AFRAME) setEngineLoaded(true);
+          if (window.XR8) setEngineLoaded(true);
         }}
       />
-      {/* Secondary script helper for canvas UI styling/overlays */}
-      <Script src="https://aframe.io/releases/1.5.0/aframe.min.js" strategy="beforeInteractive" />
 
       {engineLoaded ? (
-        // @ts-ignore - A-Frame elements aren't native TSX intrinsics
-       <a-scene
-  xrweb="disableWorldTracking: false; disableLoadingScreen: true; disableReadyScreen: true;"
-  tap-to-place
-  style={{ width: "100%", height: "100%" }}
->
-          {/* Asset pipeline pointing directly to your file in the public directory */}
+        // @ts-ignore
+        <a-scene
+          xrweb="disableWorldTracking: false; disableLoadingScreen: true; disableReadyScreen: true;"
+          tap-to-place
+          style={{ width: "100%", height: "100%" }}
+        >
           {/* @ts-ignore */}
           <a-assets>
             <video
@@ -92,7 +94,6 @@ export default function ArExperiencePage() {
             />
           </a-assets>
 
-          {/* Device Camera Rig with Raycaster configured to look for surface clicks */}
           {/* @ts-ignore */}
           <a-camera
             id="camera"
@@ -101,7 +102,6 @@ export default function ArExperiencePage() {
             cursor="fuse: false; rayOrigin: mouse;"
           />
 
-          {/* Invisible ground raycast receiver representing physical space */}
           {/* @ts-ignore */}
           <a-entity
             class="surface-floor"
@@ -110,14 +110,12 @@ export default function ArExperiencePage() {
             visible="false"
           />
 
-          {/* Surface visual guide reticle */}
           {/* @ts-ignore */}
           <a-entity id="floor-reticle">
             {/* @ts-ignore */}
-            <a-ring color="#accent" radius-inner="0.3" radius-outer="0.4" rotation="-90 0 0" />
+            <a-ring color="#4F46E5" radius-inner="0.3" radius-outer="0.4" rotation="-90 0 0" />
           </a-entity>
 
-          {/* The Container for your floating 16:9 MP4 Campus Video Screen */}
           {/* @ts-ignore */}
           <a-entity id="video-screen-container" position="0 0 0" visible="false" look-at="#camera">
             {/* @ts-ignore */}
@@ -125,13 +123,15 @@ export default function ArExperiencePage() {
           </a-entity>
         </a-scene>
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-50 p-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
-          <p className="text-xl font-light tracking-wide"></p>
+        /* Custom UI Loading Wrapper built with Tailwind */
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-neutral-900 to-black text-white z-50 p-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+          {/* <h2 className="text-xl font-bold tracking-tight mb-1">MEGAMIND X TAPMI</h2> */}
+          <p className="text-xs font-light text-neutral-400 tracking-wide animate-pulse">
+            Configuring AR Engine...
+          </p>
         </div>
       )}
-
-      
     </div>
   );
 }
