@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TAPMI WebAR",
+  title: "",
   description: "Experience the future of campus interaction through our cutting-edge WebAR portal.",
 };
 
