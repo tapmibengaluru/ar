@@ -73,11 +73,11 @@ export default function ArExperiencePage() {
 
       {engineLoaded ? (
         // @ts-ignore - A-Frame elements aren't native TSX intrinsics
-        <a-scene
-          xrweb="disableWorldTracking: false"
-          tap-to-place
-          style={{ width: "100%", height: "100%" }}
-        >
+       <a-scene
+  xrweb="disableWorldTracking: false; disableLoadingScreen: true; disableReadyScreen: true;"
+  tap-to-place
+  style={{ width: "100%", height: "100%" }}
+>
           {/* Asset pipeline pointing directly to your file in the public directory */}
           {/* @ts-ignore */}
           <a-assets>
@@ -127,9 +127,11 @@ export default function ArExperiencePage() {
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-50 p-6">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
-          <p className="text-xl font-light tracking-wide">Initializing AR Environment...</p>
+          <p className="text-xl font-light tracking-wide"></p>
         </div>
       )}
+
+      
     </div>
   );
 }
