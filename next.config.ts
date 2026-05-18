@@ -1,8 +1,14 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  allowedDevOrigins: ["cosmetics-variation-bangkok-plaintiff.trycloudflare.com"],
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/ar-experience',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;
